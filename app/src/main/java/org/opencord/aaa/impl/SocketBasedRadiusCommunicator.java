@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.onlab.packet.DeserializationException;
 import org.onlab.packet.EthType;
 import org.onlab.packet.Ethernet;
@@ -193,6 +194,7 @@ public class SocketBasedRadiusCommunicator implements RadiusCommunicator {
                             new DatagramPacket(packetBuffer, packetBuffer.length);
                     DatagramSocket socket = radiusSocket;
                     socket.receive(inboundBasePacket);
+                    aaaManager.getConfiguredAaaServerAddress();
                     aaaManager.checkForPacketFromUnknownServer(inboundBasePacket.getAddress().getHostAddress());
                     log.debug("Packet #{} received", packetNumber++);
                     try {
@@ -213,6 +215,9 @@ public class SocketBasedRadiusCommunicator implements RadiusCommunicator {
                 } catch (IOException e) {
                     log.info("Socket was closed, exiting listener thread");
                     done = true;
+                } catch (Exception e) {
+                	log.warn(ExceptionUtils.getFullStackTrace(e));
+                	log.warn("Exception thrown by listerner" + e.getMessage());
                 }
             }
         }

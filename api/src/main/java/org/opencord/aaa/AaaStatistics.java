@@ -16,8 +16,12 @@
 
 package org.opencord.aaa;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.Logger;
 
 public class AaaStatistics {
     // Number of access accept packets sent to the server
@@ -50,7 +54,6 @@ public class AaaStatistics {
     private AtomicLong requestReTx = new AtomicLong();
     // Number of sessions expired
     private AtomicLong numberOfSessionsExpired = new AtomicLong();
-
     private LinkedList<Long> packetRoundTripTimeList = new LinkedList<Long>();
 
     public LinkedList<Long> getPacketRoundTripTimeList() {
@@ -196,6 +199,7 @@ public class AaaStatistics {
         requestRttMilis.set(0);
         unknownServerRx.set(0);
         unknownTypeRx.set(0);
+        timedOutPackets.set(0);
     }
 
     public long getTimedOutPackets() {

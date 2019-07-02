@@ -67,13 +67,13 @@ public class AaaConfig extends Config<ApplicationId> {
     public static final String DEFAULT_NAS_MAC = "00:00:00:00:10:01";
 
     // RADIUS server shared secret
-    protected static final String DEFAULT_RADIUS_SECRET = "ONOSecret";
+    protected static final String DEFAULT_RADIUS_SECRET = "SHUBHAM!123";
 
     // Radius Server UDP Port Number
     protected static final String DEFAULT_RADIUS_SERVER_PORT = "1812";
 
     // Time configured for triggering timeouts in AAA app
-    protected static final String DEFAULT_SESSION_CLEANUP_TIMER = "10";
+    protected static final String DEFAULT_SESSION_CLEANUP_TIMER = "1";
 
     // Radius Server Vlan ID
     protected static final String DEFAULT_RADIUS_VLAN_ID = "4093";

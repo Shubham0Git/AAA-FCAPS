@@ -156,7 +156,6 @@ public class RadiusOperationalStatusManager
         RADIUS radiusStatusServerRequest;
         // identifier = 0 for status server
         radiusStatusServerRequest = new RADIUS(RADIUS_CODE_STATUS_REQUEST, AAA_REQUEST_ID_STATUS_REQUEST);
-
         radiusStatusServerRequest.setIdentifier(AAA_REQUEST_ID_STATUS_REQUEST);
         radiusStatusServerRequest.setAttribute(RADIUSAttribute.RADIUS_ATTR_USERNAME, DUMMY_USER.getBytes());
 
@@ -192,8 +191,11 @@ public class RadiusOperationalStatusManager
                 radiusServerOperationalStatus = OperationalStatus.IN_USE;
             } else if (statusServerReqSent && !fakeAccessRequestPacketRecieved) {
                 radiusServerOperationalStatus = OperationalStatus.UNAVAILABLE;
+            } else {
+            	radiusServerOperationalStatus = OperationalStatus.UNKNOWN;
             }
         } else {
+        	log.info("Radius Response recieved. Status is IN_USE");
             radiusServerOperationalStatus = OperationalStatus.IN_USE;
         }
     }
@@ -209,6 +211,8 @@ public class RadiusOperationalStatusManager
                     radiusServerOperationalStatus = OperationalStatus.IN_USE;
                 } else if (statusServerReqSent && !serverStatusPacketRecieved) {
                     radiusServerOperationalStatus = OperationalStatus.UNAVAILABLE;
+                } else {
+                	radiusServerOperationalStatus = OperationalStatus.UNKNOWN;
                 }
             } else {
                 if (radiusOperationalStatusEvaluationMode == RadiusOperationalStatusEvaluationMode.AUTO) {

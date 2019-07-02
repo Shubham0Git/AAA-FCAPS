@@ -37,8 +37,8 @@
     </properties>
 
     <modules>
-        <module>app</module>
         <module>api</module>
+        <module>app</module>
     </modules>
 
     <dependencies>

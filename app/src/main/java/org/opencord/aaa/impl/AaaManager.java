@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
 import java.util.Dictionary;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Mac;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.felix.scr.annotations.Component;
@@ -133,10 +136,6 @@ implements AuthenticationService {
     private final DeviceListener deviceListener = new InternalDeviceListener();
 
     private static final int DEFAULT_REPEAT_DELAY = 20;
-<<<<<<< HEAD
-    @Property(name = "statisticsGenerationEvent", intValue = DEFAULT_REPEAT_DELAY, label = "statisticsGenerationEvent")
-    private int statisticsGenerationEvent = DEFAULT_REPEAT_DELAY;
-=======
     @Property(name = "statisticsGenerationPeriodInSeconds", intValue = DEFAULT_REPEAT_DELAY,
               label = "AAA Statistics generation frequency in seconds")
     private int statisticsGenerationPeriodInSeconds = DEFAULT_REPEAT_DELAY;
@@ -158,7 +157,6 @@ implements AuthenticationService {
             label = "Evaluation mode for determining the Operational Status of Radius Server. Valid values are AUTO "
                     + "(default), STATUS_REQUEST and ACCESS_REQUEST")
     protected String operationalStatusEvaluationMode = DEFAULT_STATUS_SERVER_MODE;
->>>>>>> 63fed01... [SEBA-624] Implementation of radius server operational status
 
     // NAS IP address
     protected InetAddress nasIpAddress;
@@ -280,13 +278,7 @@ implements AuthenticationService {
         impl.initializeLocalState(newCfg);
         impl.requestIntercepts();
         deviceService.addListener(deviceListener);
-        getConfiguredAaaServerAddress();
-<<<<<<< HEAD
-        authenticationStatisticsPublisher = new AuthenticationStatisticsEventPublisher();
-        executor = Executors.newScheduledThreadPool(1);
-        scheduledFuture = executor.scheduleAtFixedRate(authenticationStatisticsPublisher, 0, statisticsGenerationEvent,
-                TimeUnit.SECONDS);
-=======
+//        getConfiguredAaaServerAddress();
         radiusOperationalStatusService.initialize(nasIpAddress.getAddress(), radiusSecret, impl);
         authenticationStatisticsPublisher =
                 new AuthenticationStatisticsEventPublisher();
@@ -296,7 +288,6 @@ implements AuthenticationService {
             0, statisticsGenerationPeriodInSeconds, TimeUnit.SECONDS);
         scheduledStatusServerChecker = executor.scheduleAtFixedRate(new ServerStatusChecker(), 0,
             operationalStatusEventGenerationPeriodInSeconds, TimeUnit.SECONDS);
->>>>>>> 63fed01... [SEBA-624] Implementation of radius server operational status
 
         log.info("Started");
     }
@@ -319,11 +310,6 @@ implements AuthenticationService {
     }
     @Modified
     public void modified(ComponentContext context) {
-<<<<<<< HEAD
-        Dictionary<?, ?> properties = context.getProperties();
-        String s = Tools.get(properties, "statisticsGenerationEvent");
-        statisticsGenerationEvent = Strings.isNullOrEmpty(s) ? DEFAULT_REPEAT_DELAY : Integer.parseInt(s.trim());
-=======
         Dictionary<String, Object> properties = context.getProperties();
         String s = Tools.get(properties, "statisticsGenerationPeriodInSeconds");
         statisticsGenerationPeriodInSeconds = Strings.isNullOrEmpty(s) ? DEFAULT_REPEAT_DELAY
@@ -351,7 +337,6 @@ implements AuthenticationService {
         } else {
             properties.put("operationalStatusEvaluationMode", operationalStatusEvaluationMode);
         }
->>>>>>> 63fed01... [SEBA-624] Implementation of radius server operational status
     }
 
     private void configureRadiusCommunication() {
@@ -380,7 +365,7 @@ implements AuthenticationService {
         }
     }
 
-    private void getConfiguredAaaServerAddress() {
+    public void getConfiguredAaaServerAddress() {
         try {
             InetAddress address;
             if (newCfg.radiusHostName() != null) {
@@ -396,6 +381,9 @@ implements AuthenticationService {
     }
 
     private void checkReceivedPacketForValidValidator(RADIUS radiusPacket) {
+    	//TOD: Decide if header authenticator needs to be compared.
+    	//Formula: ResponseAuth = MD5(Code + Id + Length + RequestAuth + Attributes + Secret)
+        //radiusPacket.getAuthenticator();
         if (!radiusPacket.checkMessageAuthenticator(radiusSecret)) {
             aaaStatisticsManager.getAaaStats().increaseInvalidValidatorsRx();
         }
@@ -404,6 +392,7 @@ implements AuthenticationService {
     public void checkForPacketFromUnknownServer(String hostAddress) {
         if (!hostAddress.equals(configuredAaaServerAddress)) {
             aaaStatisticsManager.getAaaStats().incrementUnknownServerRx();
+            getConfiguredAaaServerAddress();
         }
     }
 
@@ -432,7 +421,6 @@ implements AuthenticationService {
         StateMachine.CleanupTimerTask cleanupTask = stateMachine.new CleanupTimerTask(sessionId, this);
         ScheduledFuture<?> cleanupTimer = executor.schedule(cleanupTask, cleanupTimerTimeOutInMins, TimeUnit.MINUTES);
         stateMachine.setCleanupTimer(cleanupTimer);
-
     }
 
     /**
@@ -680,7 +668,7 @@ implements AuthenticationService {
                     stateMachine.setUsername(eapPacket.getData());
                     radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
                     radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
-                    radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                    radiusPayload.addMessageAuthenticator(radiusSecret);
 
                     sendRadiusPacket(radiusPayload, inPacket);
                     stateMachine.setWaitingForRadiusResponse(true);
@@ -706,7 +694,7 @@ implements AuthenticationService {
                             radiusPayload.setAttribute(RADIUSAttribute.RADIUS_ATTR_STATE,
                                     stateMachine.challengeState());
                         }
-                        radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                        radiusPayload.addMessageAuthenticator(radiusSecret);
                         sendRadiusPacket(radiusPayload, inPacket);
                         stateMachine.setWaitingForRadiusResponse(true);
                     }
@@ -722,7 +710,7 @@ implements AuthenticationService {
                     }
                     stateMachine.setRequestAuthenticator(radiusPayload.generateAuthCode());
 
-                    radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                    radiusPayload.addMessageAuthenticator(radiusSecret);
                     sendRadiusPacket(radiusPayload, inPacket);
                     stateMachine.setWaitingForRadiusResponse(true);
 
@@ -787,6 +775,7 @@ implements AuthenticationService {
             }
             if (newCfg.radiusSecret() != null) {
                 radiusSecret = newCfg.radiusSecret();
+                log.info("Configured secret----------------"+radiusSecret);
             }
 
             boolean reconfigureCustomizer = false;
@@ -860,8 +849,8 @@ implements AuthenticationService {
             log.debug("AcceptResponsesRx---" + aaaStatisticsManager.getAaaStats().getAcceptResponsesRx());
             log.debug("AccessRequestsTx---" + aaaStatisticsManager.getAaaStats().getAccessRequestsTx());
             log.debug("ChallengeResponsesRx---" + aaaStatisticsManager.getAaaStats().getChallengeResponsesRx());
-            log.debug("DroppedResponsesRx---" + aaaStatisticsManager.getAaaStats().getDroppedResponsesRx());
-            log.debug("InvalidValidatorsRx---" + aaaStatisticsManager.getAaaStats().getInvalidValidatorsRx());
+//            log.debug("DroppedResponsesRx---" + aaaStatisticsManager.getAaaStats().getDroppedResponsesRx());
+//            log.debug("InvalidValidatorsRx---" + aaaStatisticsManager.getAaaStats().getInvalidValidatorsRx());
             log.debug("MalformedResponsesRx---" + aaaStatisticsManager.getAaaStats().getMalformedResponsesRx());
             log.debug("PendingRequests---" + aaaStatisticsManager.getAaaStats().getPendingRequests());
             log.debug("RejectResponsesRx---" + aaaStatisticsManager.getAaaStats().getRejectResponsesRx());
@@ -869,14 +858,7 @@ implements AuthenticationService {
             log.debug("RequestRttMilis---" + aaaStatisticsManager.getAaaStats().getRequestRttMilis());
             log.debug("UnknownServerRx---" + aaaStatisticsManager.getAaaStats().getUnknownServerRx());
             log.debug("UnknownTypeRx---" + aaaStatisticsManager.getAaaStats().getUnknownTypeRx());
-<<<<<<< HEAD
             log.debug("TimedOutPackets----" + aaaStatisticsManager.getAaaStats().getTimedOutPackets());
-            aaaStatisticsManager.getStatsDelegate().notify(new AuthenticationStatisticsEvent(
-                    AuthenticationStatisticsEvent.Type.STATS_UPDATE, aaaStatisticsManager.getAaaStats()));
-        }
-    }
-}
-=======
             aaaStatisticsManager.getStatsDelegate().
                 notify(new AuthenticationStatisticsEvent(AuthenticationStatisticsEvent.Type.STATS_UPDATE,
                     aaaStatisticsManager.getAaaStats()));
@@ -898,4 +880,3 @@ implements AuthenticationService {
 
     }
 }
->>>>>>> 63fed01... [SEBA-624] Implementation of radius server operational status

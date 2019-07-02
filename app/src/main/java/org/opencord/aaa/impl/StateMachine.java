@@ -429,6 +429,7 @@ class StateMachine {
         }
         identifier = identifier % 255;
         identifierMap.put(identifier, this);
+        log.debug("--identifier--" + identifier);
         return (byte) identifier;
     }
 

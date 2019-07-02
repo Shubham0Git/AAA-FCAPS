@@ -29,7 +29,7 @@ public class AaaShowCountersCommand extends AbstractShellCommand {
     @Override
     protected void execute() {
 
-        AaaStatistics aaaStats = new AaaStatistics();
+        AaaStatistics aaaStats;
 
         AuthenticationStatisticsService aaaStatisticsManager =
                 AbstractShellCommand.get(AuthenticationStatisticsService.class);
@@ -41,12 +41,13 @@ public class AaaShowCountersCommand extends AbstractShellCommand {
         System.out.format("%30s %10d\n", "AcceptResponsesRx", aaaStats.getAcceptResponsesRx());
         System.out.format("%30s %10d\n", "RejectResponsesRx", aaaStats.getRejectResponsesRx());
         System.out.format("%30s %10d\n", "PendingRequests", aaaStats.getPendingRequests());
-        System.out.format("%30s %10d\n", "DroppedResponsesRx", aaaStats.getDroppedResponsesRx());
-        System.out.format("%30s %10d\n", "InvalidValidatorsRx", aaaStats.getInvalidValidatorsRx());
+//        System.out.format("%30s %10d\n", "DroppedResponsesRx", aaaStats.getDroppedResponsesRx());
+//        System.out.format("%30s %10d\n", "InvalidValidatorsRx", aaaStats.getInvalidValidatorsRx());
         System.out.format("%30s %10d\n", "MalformedResponsesRx", aaaStats.getMalformedResponsesRx());
         System.out.format("%30s %10d\n", "UnknownServerRx", aaaStats.getUnknownServerRx());
         System.out.format("%30s %10d\n", "UnknownTypeRx", aaaStats.getUnknownTypeRx());
         System.out.format("%30s %10d\n", "RequestRttMillis", aaaStats.getRequestRttMilis());
+        System.out.format("%30s %10d\n", "TimedOutPackets", aaaStats.getTimedOutPackets());
 
   }
 }
