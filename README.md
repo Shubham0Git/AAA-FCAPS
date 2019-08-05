@@ -77,3 +77,13 @@ More customizers might be added to AAA App later which can fill Subscriber speci
       }
     }
  ```
+  ### Radius Server Operational Status
+ In AAA operational status of radius server is determined based on the configured operationalStatusEvaluationMode value. Possible operational status values are IN_USE, UNAVAILABLE, UNKNOWN. There are three options for operationalStatusEvaluationMode
+- "AUTO" : This mode to be used when radius server specifications are not clear. When mode value set to AUTO. AAA will form statusServer request and send it to radius server in every fixed time interval(Configurable). If access-accept response received then set the Operational status as IN-USE. Else form access-request with dummy-user and send to radius server. If access-reject recieved then set to IN-USE else set UNAVAILABLE.
+
+- "STATUS_REQUEST" : This mode to be used when radius server supports rfc 5997. AAA will form statusServer request and send it to radius server in every fixed time interval(Configurable). If access-accept response received then set the Operational status as IN-USE. Else set the Operational status as UNAVAILABLE.
+
+- "ACCESS_REQUEST" : This mode to be used when radius server does not supports rfc 5997. AAA will check for any radius response received, if yes set Operational status as IN-USE. Otherwise form access-request with dummy-user and send it to radius server. If access-reject recieved then set to IN-USE else set UNAVAILABLE.
+
+In all of these 3 modes, if aaa is not able to send request to radius server, set the Operational status as UNKNOWN.
+
